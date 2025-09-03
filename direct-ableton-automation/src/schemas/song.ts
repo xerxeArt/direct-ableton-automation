@@ -52,7 +52,13 @@ export const zSong = z.object({
         signature_denominator: z.number().int().positive(),
         sections: z.array(zSection),
     }),
-    tracks: z.array(zTrackSpec),
+    tracks: z.array(zTrackSpec)
+      .refine(
+        (tracks) => tracks.some((track) => track.role === "chords"),
+        {
+          message: 'Song must include at least one track with role "chords".',
+        }
+      ),
 });
 
 // Exported types inferred from the schema (single source-of-truth)
