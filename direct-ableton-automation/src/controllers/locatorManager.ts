@@ -1,5 +1,5 @@
 // src/controllers/locatorManager.ts
-import type { Locator } from '../types.js';
+import type { SectionSpec } from '../types.js';
 import { AbletonWrapper } from '../ableton/abletonWrapper.js';
 
 export class LocatorManager {
@@ -9,24 +9,24 @@ export class LocatorManager {
     this.abletonWrapper = abletonWrapper;
   }
 
-  async createLocators(locators: Locator[]): Promise<void> {
-    console.log(`Creating ${locators.length} locators...`);
-    
-    for (const locator of locators) {
-      await this.createLocator(locator);
+  async createLocators(sections: SectionSpec[]): Promise<void> {
+    console.log(`Creating ${sections.length} locators...`);
+
+    for (const section of sections) {
+      await this.createLocator(section);
     }
   }
 
-  private async createLocator(locatorData: Locator): Promise<void> {
+  private async createLocator(sectionData: SectionSpec): Promise<void> {
     try {
       await this.abletonWrapper.createLocator({
-        time_bar: locatorData.bar,
-        name: locatorData.name
+        time_bar: sectionData.start_bar,
+        name: sectionData.name
       });
 
-      console.log(`Locator "${locatorData.name}" created at ${locatorData.bar}`);
+      console.log(`Locator "${sectionData.name}" created at ${sectionData.start_bar}`);
     } catch (error) {
-      console.error(`Error creating locator "${locatorData.name}":`, error);
+      console.error(`Error creating locator "${sectionData.name}":`, error);
       throw error;
     }
   }

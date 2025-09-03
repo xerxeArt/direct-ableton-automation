@@ -15,12 +15,6 @@ The initial JSON template example:
       {"name": "Verse 1", "start_bar": 9, "length_bars": 16, "mood": "narrative", "chords": ["C", "Am", "F", "G"]},
       {"name": "Pre", "start_bar": 25, "length_bars": 8},
       {"name": "Chorus", "start_bar": 33, "length_bars": 16}
-    ],
-    "locators": [
-      {"bar": 1, "name": "Intro"},
-      {"bar": 9, "name": "Verse 1"},
-      {"bar": 25, "name": "Pre"},
-      {"bar": 33, "name": "Chorus"}
     ]
   },
   "tracks": [

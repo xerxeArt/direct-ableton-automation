@@ -3,19 +3,19 @@ import type { Ableton } from 'ableton-js';
 import type { LiveTrackKind } from '../types.js';
 import { timeBarToBeats } from '../tools/timeTools.js';
 
-export interface ClipConfig {
+interface ClipConfig {
     startTime: number;
     length: number;
     name?: string;
     color?: number;
 }
 
-export interface LocatorConfig {
+interface LocatorConfig {
     time_bar: number;
     name: string;
 }
 
-export interface InstrumentConfig {
+interface InstrumentConfig {
     name: string;
     preset?: string;
 }
@@ -57,32 +57,25 @@ export class AbletonWrapper {
         }
     }
 
-    async setSongName(name: string): Promise<void> {
-        // This might require direct LOM access as song name may not be directly settable
-        console.warn('Song name setting may require direct LOM implementation');
-    }
-
     // Track operations
     async createTrack(type: LiveTrackKind): Promise<number> {
-        let track;
-
         switch (type) {
             case 'audio':
                 // ableton-js exposes camelCase creation methods
                 // use camelCase API when available
-                track = await this.ableton.song.createAudioTrack();
+                await this.ableton.song.createAudioTrack();
                 break;
             case 'midi':
                 // use camelCase API when available
-                track = await this.ableton.song.createMidiTrack();
+                await this.ableton.song.createMidiTrack();
                 break;
             case 'return':
                 // use camelCase API when available
-                track = await this.ableton.song.createReturnTrack();
+                await this.ableton.song.createReturnTrack();
                 break;
             case 'master':
                 // Master track already exists, get reference
-                track = await this.ableton.song.get('master_track');
+                await this.ableton.song.get('master_track');
                 break;
             default:
                 throw new Error(`Unknown track type: ${type}`);
@@ -99,6 +92,9 @@ export class AbletonWrapper {
         const tracksAny: any = await this.ableton.song.get('tracks');
         const children = Array.isArray(tracksAny) ? tracksAny : await tracksAny.get?.('children') ?? [];
         const track: any = children[trackIndex];
+        //track.raw.name = name;
+        // let origName = await track.get?.('name');
+        // log(`Renaming track from '${origName}' to '${name}'`);
         await track.set?.('name', name);
     }
 
@@ -197,18 +193,11 @@ export class AbletonWrapper {
             } catch (e) {
                 console.warn('Cue creation call failed or not available, will try to locate existing cue:', e);
             }
-
-            // If a name was provided, find the cue point near the requested time and set its name
-            if (locatorConfig.name) {
-                await this.nameCueNear(songAny, beatTime, locatorConfig.name);
-            }
         } catch (error) {
-            console.warn('Locator creation may require alternative approach or direct LOM access');
+            console.warn('Locator creation may have failed', error);
             throw error;
         }
     }
-
-    // ...existing code...
 
     // Instrument operations
     async addInstrument(trackIndex: number, instrumentConfig: InstrumentConfig): Promise<number> {
@@ -220,7 +209,7 @@ export class AbletonWrapper {
         // This is a simplified approach - actual instrument loading may require
         // browsing the Live browser and loading specific instruments
         try {
-            const device = await devices.createDevice?.(instrumentConfig.name) ?? await devices.create_device?.(instrumentConfig.name);
+            await devices.createDevice?.(instrumentConfig.name) ?? await devices.create_device?.(instrumentConfig.name);
 
             if (instrumentConfig.preset) {
                 // Loading presets may require additional browser navigation
@@ -252,40 +241,12 @@ export class AbletonWrapper {
 
     // Helper: try common LOM methods to create/set a cue at the given beat time
     private async tryCreateCue(songAny: any, beatTime: number): Promise<void> {
-        if (typeof songAny.call === 'function') {
-            // some Live APIs expose generic call(name, arg)
-            await songAny.call('set_or_delete_cue', beatTime);
-        } else if (typeof songAny.set_or_delete_cue === 'function') {
-            await songAny.set_or_delete_cue(beatTime);
-        } else if (typeof songAny.setOrDeleteCue === 'function') {
+        if (typeof songAny.setOrDeleteCue === 'function') {
             await songAny.setOrDeleteCue(beatTime);
         } else {
             // fallback to cue_points helper creation if present
             const cuePoints: any = await songAny.get?.('cue_points') ?? await songAny.get?.('cuePoints');
             await (cuePoints?.createCuePoint?.(beatTime) ?? cuePoints?.create_cue_point?.(beatTime));
-        }
-    }
-
-    // Helper: find an existing cue near beatTime and set its name
-    private async nameCueNear(songAny: any, beatTime: number, name: string): Promise<void> {
-        const cuePointsAny: any = await songAny.get?.('cue_points') ?? await songAny.get?.('cuePoints');
-        const cues = Array.isArray(cuePointsAny) ? cuePointsAny : await cuePointsAny?.get?.('children') ?? [];
-
-        const eps = 1e-3;
-        for (let i = 0; i < cues.length; i++) {
-            try {
-                const cp: any = cues[i];
-                const timeVal = await cp.get?.('time') ?? await cp.get?.('song_time') ?? cp.time;
-                const t = typeof timeVal === 'number' ? timeVal : Number(timeVal);
-                if (!Number.isFinite(t)) continue;
-                if (Math.abs(t - beatTime) < eps) {
-                    await cp.set?.('name', name);
-                    return;
-                }
-            } catch (inner) {
-                // ignore per-cue errors and continue
-                console.warn('Error inspecting cue point, continuing', inner);
-            }
         }
     }
 }

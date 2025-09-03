@@ -46,4 +46,4 @@ export async function timeBarToBeats(songAny: any, timeBar: number): Promise<num
     return tb * beatsPerBarInQuarter;
 }
 
-export default timeBarToBeats;
+// timeBarToBeats is exported as a named function above

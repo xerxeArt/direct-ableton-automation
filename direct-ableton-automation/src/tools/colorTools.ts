@@ -19,10 +19,10 @@ export function parseNamedColorToInt(color?: string): number | null {
 
 
 
-export default parseNamedColorToInt;
+// kept as a named export only; no default export
 
 // Common named colors map (hex strings in #rrggbb format)
-export const NAMED_COLORS: Record<string, string> = {
+const NAMED_COLORS: Record<string, string> = {
     red: '#ff0000',
     green: '#00ff00',
     blue: '#0000ff',
@@ -46,8 +46,10 @@ export const NAMED_COLORS: Record<string, string> = {
  * Returns null when the name is unknown.
  * Supported (common) colors: red, green, blue, white, black.
  */
-export function colorNameToHex(name?: string): string | null {
+function colorNameToHex(name?: string): string | null {
     if (!name) return null;
     const key = name.trim().toLowerCase();
     return NAMED_COLORS[key] ?? null;
 }
+
+// parseNamedColorToInt is exported via its declaration above

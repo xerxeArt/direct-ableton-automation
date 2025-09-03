@@ -1,7 +1,5 @@
 // src/index.ts
 import { readFileSync } from "fs";
-import { applySong } from "./top-layer.js";
-
 import { Ableton } from 'ableton-js';
 import type { SongJSON } from './schemas/song.js';
 import { SongController } from './controllers/songController.js';
