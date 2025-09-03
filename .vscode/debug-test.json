@@ -1,0 +1,19 @@
+{
+  "song_structure": {
+    "total_length_bars": 16,
+    "sections": [
+      {
+        "name": "Intro",
+        "start_bar": 1,
+        "length_bars": 4
+      }
+    ]
+  },
+  "tracks": [
+    {
+      "name": "Track 1",
+      "role": "lead",
+      "type": "midi"
+    }
+  ]
+}

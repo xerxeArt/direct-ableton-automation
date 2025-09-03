@@ -1,10 +1,10 @@
 // src/controllers/highlevel.ts
-import { LocatorSpec, TrackSpec } from "../types";
+import type { LocatorSpec, SectionSpec, TrackSpec } from "../types.js";
 
 // In future: import ableton from "ableton-js";
 // and lower layers: song.set("current_song_time"); song.call("set_or_delete_cue")
 
-export async function createLocators(locators: LocatorSpec[]): Promise<void> {
+export async function createLocators(locators: SectionSpec[]): Promise<void> {
   // TODO: ableton.song.* calls per locator.bar and locator.name
 }
 

@@ -1,0 +1,38 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\direct-ableton-automation\\src\\index.ts",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        }
+        ,
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program - with test JSON",
+            "preLaunchTask": "npm: build",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\direct-ableton-automation\\dist\\index.js",
+            "args": [
+                "${workspaceFolder}\\.vscode\\debug-test.json"
+            ],
+            "console": "integratedTerminal",
+            "outFiles": [
+                "${workspaceFolder}\\direct-ableton-automation\\dist\\**\\*.js"
+            ]
+        }
+    ]
+}
