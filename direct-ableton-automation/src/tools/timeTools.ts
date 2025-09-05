@@ -36,9 +36,7 @@ export async function readTimeSignature(songAny: any): Promise<{ numerator: numb
  * - Beats per bar in quarter-note beats = numerator * (4 / denominator).
  * - total beats = timeBar * beatsPerBarInQuarter
  */
-export async function timeBarToBeats(songAny: any, timeBar: number): Promise<number> {
-    const { numerator, denominator } = await readTimeSignature(songAny);
-
+export async function timeBarToBeats(numerator: number, denominator: number, timeBar: number): Promise<number> {
     // beats per bar measured in quarter-note beats
     const beatsPerBarInQuarter = numerator * (4 / denominator);
 

@@ -24,22 +24,25 @@ export const zSection = z.object({
     length_bars: z.number().int().positive(),
     mood: z.string().optional(),
     chords: z.array(z.string()).optional(),
+    energy: z.number().min(0).max(1).optional(),
 });
 
+// A couple of runtime-only helper types for tracks
+export const zClip = z.object({ startTime: z.number(), length: z.number(), name: z.string().optional(), color: z.string().optional() });
+export const zInstrumentSpec = z.object({ name: z.string(), preset: z.string().optional(), parameters: z.record(z.string(), z.any()).optional() });
+
 export const zTrackSpec = z.object({
+    id: z.int().positive().optional(), // Assigned by Ableton, not in input JSON
     name: z.string(),
     role: z.string(),
     type: z.enum(LiveTrackKind),
     device_chain: z.array(zDeviceSpec).optional(),
     external_instrument: zExternalInstrument.optional(),
+    instruments: z.array(zInstrumentSpec).optional(),
     color: z.string().optional(),
     group: z.string().optional(),
     comments: z.string().optional(),
 });
-
-// A couple of runtime-only helper types for tracks
-export const zClip = z.object({ startTime: z.number(), length: z.number(), name: z.string().optional(), color: z.number().optional() });
-export const zInstrumentSpec = z.object({ name: z.string(), preset: z.string().optional(), parameters: z.record(z.string(), z.any()).optional() });
 
 // Aggregate song schema
 export const zSong = z.object({
@@ -66,21 +69,10 @@ export type DeviceSpec = z.infer<typeof zDeviceSpec>;
 export type ExternalInstrument = z.infer<typeof zExternalInstrument>;
 export type SectionSpec = z.infer<typeof zSection>;
 export type TrackSpec = z.infer<typeof zTrackSpec>;
-export type Clip = z.infer<typeof zClip>;
+export type ClipSpec = z.infer<typeof zClip>;
 export type InstrumentSpec = z.infer<typeof zInstrumentSpec>;
 export type SongStructure = z.infer<typeof zSong>['song_structure'];
 export type SongJSON = z.infer<typeof zSong>;
-
-// Compatibility / runtime-only aliases for controllers
-export type Track = TrackSpec & {
-    clips?: Clip[];
-    instruments?: InstrumentSpec[];
-    volume?: number;
-    pan?: number;
-    muted?: boolean;
-    solo?: boolean;
-    armed?: boolean;
-};
 
 export type Instrument = InstrumentSpec;
 

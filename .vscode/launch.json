@@ -27,7 +27,7 @@
             ],
             "program": "${workspaceFolder}\\direct-ableton-automation\\dist\\index.js",
             "args": [
-                "${workspaceFolder}\\.vscode\\debug-test.json"
+                "${workspaceFolder}\\my_songs\\003-MountainMysteries.json"
             ],
             "console": "integratedTerminal",
             "outFiles": [

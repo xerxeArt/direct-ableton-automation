@@ -1,14 +1,7 @@
 // src/ableton/abletonWrapper.ts
 import type { Ableton } from 'ableton-js';
-import type { LiveTrackKind } from '../types.js';
+import type { ClipWithNotes, LiveTrackKind } from '../types.js';
 import { timeBarToBeats } from '../tools/timeTools.js';
-
-interface ClipConfig {
-    startTime: number;
-    length: number;
-    name?: string;
-    color?: number;
-}
 
 interface LocatorConfig {
     time_bar: number;
@@ -55,6 +48,20 @@ export class AbletonWrapper {
             console.warn('Time signature setting may require direct LOM implementation');
             throw error;
         }
+    }
+
+    async getTimeSignature(): Promise<{ numerator: number; denominator: number }> {
+        // May require direct LOM access
+        var numerator: number = 4, denominator: number = 4;
+        const songAny: any = this.ableton.song;
+        if (typeof songAny.set === 'function') {
+            numerator = await songAny.get('signature_numerator');
+            denominator = await songAny.get('signature_denominator');
+        } else {
+            numerator = songAny.signature_numerator;
+            denominator = songAny.signature_denominator;
+        }
+        return { numerator, denominator };
     }
 
     // Track operations
@@ -138,51 +145,63 @@ export class AbletonWrapper {
     }
 
     async setTrackArmed(trackIndex: number, armed: boolean): Promise<void> {
-        const tracksAny: any = await this.ableton.song.get('tracks');
-        const children = Array.isArray(tracksAny) ? tracksAny : await tracksAny.get?.('children') ?? [];
-        const track: any = children[trackIndex];
+        const track: any = await this.getTrackByIndex(trackIndex);
         await track.set?.('arm', armed ? 1 : 0);
     }
 
-    // Clip operations
-    async createClip(trackIndex: number, clipConfig: ClipConfig): Promise<void> {
+    private async getTrackByIndex(trackIndex: number) {
         const tracksAny: any = await this.ableton.song.get('tracks');
         const children = Array.isArray(tracksAny) ? tracksAny : await tracksAny.get?.('children') ?? [];
         const track: any = children[trackIndex];
-        const clipSlots: any = await track.get?.('clip_slots') ?? await track.get?.('clipSlots');
-
-        // Find first empty clip slot or create new one
-        const slots = Array.isArray(clipSlots) ? clipSlots : await clipSlots.get?.('children') ?? [];
-        let targetSlot = null;
-
-        for (const slot of slots) {
-            const hasClip = await slot.get?.('has_clip') ?? await slot.get?.('hasClip');
-            if (!hasClip) {
-                targetSlot = slot;
-                break;
-            }
-        }
-
-        if (targetSlot) {
-            // use camelCase API when available
-            await targetSlot.createClip?.(clipConfig.length) ?? await targetSlot.create_clip?.(clipConfig.length);
-            const clip = await targetSlot.get?.('clip');
-
-            if (clipConfig.name) {
-                await clip.set?.('name', clipConfig.name);
-            }
-
-            if (clipConfig.color !== undefined) {
-                await clip.set?.('color', clipConfig.color);
-            }
-        }
+        return track;
     }
+
+    // Clip operations
+    async createClip(trackId: number, clipWithNotes: ClipWithNotes): Promise<void> {
+        const clip = await this.createEmptyMidiClip(trackId, clipWithNotes);
+        clip.setNotes(clipWithNotes.notes);
+    }
+
+    async createEmptyMidiClip(trackId: number, clipWithNotes: ClipWithNotes): Promise<any> {
+        // Get track object
+        const track = await this.getTrackByIndex(trackId);
+
+        // Get all clip slots from the track
+        const clipSlots = await track.get('clip_slots')
+        const lastClipSlot = clipSlots.at(-1)
+
+        // Check if there is an available clip slot
+        if (!lastClipSlot) {
+            throw new Error('No clip slot available')
+        }
+
+        // Check if last slot has clip, delete if exists
+        const hasExistingClip = await lastClipSlot.get('has_clip')
+        if (hasExistingClip) {
+            await lastClipSlot.deleteClip()
+        }
+
+        // Create new empty MIDI clip
+        await lastClipSlot.createClip(clipWithNotes.lengthBeats)
+
+        // Get newly created clip and duplicate to arrangement view
+        const newlyCreatedClip = await lastClipSlot.get('clip');
+        newlyCreatedClip.set('name', clipWithNotes.name ?? '');
+        if (newlyCreatedClip) {
+            const clip = await track.duplicateClipToArrangement(newlyCreatedClip, clipWithNotes.startTimeBeats)
+            return clip;
+        }
+
+        throw new Error('Failed to create MIDI clip')
+    }
+
 
     // Locator operations
     async createLocator(locatorConfig: LocatorConfig): Promise<void> {
         try {
             const songAny: any = this.ableton.song;
-            const beatTime = await timeBarToBeats(songAny, locatorConfig.time_bar);
+            const { numerator, denominator } = await this.getTimeSignature();
+            const beatTime = await timeBarToBeats(numerator, denominator, locatorConfig.time_bar);
 
             // Move playhead to requested time (preferred approach for set_or_delete_cue APIs)
             await this.movePlayhead(songAny, beatTime);

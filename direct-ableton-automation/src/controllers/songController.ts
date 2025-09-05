@@ -1,20 +1,24 @@
 // src/controllers/songController.ts
-import type { LiveTrackKind, SongJSON } from '../schemas/song.js';
+import type { SongJSON } from '../schemas/song.js';
 import { TrackManager } from './trackManager.js';
+import { SongManager } from './songManager.js';
 import { LocatorManager } from './locatorManager.js';
 import { InstrumentManager } from './instrumentManager.js';
 import { AbletonWrapper } from '../ableton/abletonWrapper.js';
+import { Section, Track } from '../types.js';
 
 export class SongController {
   // private abletonWrapper: AbletonWrapper;
   private trackManager: TrackManager;
+  private songManager: SongManager;
   private locatorManager: LocatorManager;
   private instrumentManager: InstrumentManager;
 
   constructor(abletonWrapper: AbletonWrapper) {
     // this.abletonWrapper = abletonWrapper;
     this.trackManager = new TrackManager(abletonWrapper);
-    this.locatorManager = new LocatorManager(abletonWrapper);
+    this.songManager = new SongManager(abletonWrapper);
+    this.locatorManager = new LocatorManager(abletonWrapper, this.trackManager);
     this.instrumentManager = new InstrumentManager(abletonWrapper);
   }
 
@@ -42,7 +46,7 @@ export class SongController {
       if (songData.tracks &&
         songData.song_structure && songData.song_structure.sections && songData.song_structure.sections.length > 0
       ) {
-        await this.addChords(songData.tracks);
+        await this.addChords(songData);
       }
 
       console.log('Song processing completed successfully');
@@ -51,22 +55,32 @@ export class SongController {
       throw error;
     }
   }
-  private async addChords(tracks: SongJSON['tracks']): Promise<void> {
-    return this.trackManager.createChords(tracks ?? []);
+  private async addChords(songData: SongJSON): Promise<void> {
+    const chordTracks = songData.tracks.filter(track => track.role.toLowerCase() === 'chords');
+    const sections = songData.song_structure?.sections ?? [];
+
+    if (chordTracks.length === 0) {
+      console.info('No chord tracks found.');
+      return;
+    }
+
+    for (const track of chordTracks) {
+      await this.songManager.createChords(songData.song_structure.signature_numerator, songData.song_structure.signature_denominator, track, sections ?? []);
+    }
   }
 
   // song-level metadata like tempo/timeSignature/name are not part of SongJSON schema
   // and should be handled at a different layer if needed.
 
-  private async createTracks(tracks: SongJSON['tracks'], sections: SongJSON['song_structure']['sections']): Promise<void> {
+  private async createTracks(tracks: Track[]): Promise<void> {
     return this.trackManager.createTracks(tracks ?? []);
   }
 
-  private async createLocators(sections: SongJSON['song_structure']['sections']): Promise<void> {
+  private async createLocators(sections: Section[]): Promise<void> {
     return this.locatorManager.createLocators(sections ?? []);
   }
 
-  private async addInstruments(tracks: SongJSON['tracks']): Promise<void> {
+  private async addInstruments(tracks: Track[]): Promise<void> {
     return this.instrumentManager.addInstrumentsToTracks(tracks ?? []);
   }
 }
