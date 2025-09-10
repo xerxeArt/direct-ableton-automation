@@ -11,21 +11,37 @@ export class InstrumentManager {
 
   async addInstrumentsToTracks(tracks: Track[]): Promise<void> {
     console.log('Adding instruments to tracks...');
-    
+
     for (let i = 0; i < tracks.length; i++) {
       const track = tracks[i];
       // Guard against undefined when project uses strict indexed access
       if (!track) continue;
       if (track.instruments && track.instruments.length > 0) {
-        await this.addInstrumentsToTrack(i, track.instruments);
+        await this.addInstrumentToTrack(i, track.instruments);
       }
     }
   }
 
-  private async addInstrumentsToTrack(trackIndex: number, instruments: Instrument[]): Promise<void> {
+  async addInstrumentToTrack(trackIndex: number, instruments: Instrument[]): Promise<void> {
     for (const instrument of instruments) {
       await this.addInstrument(trackIndex, instrument);
     }
+  }
+
+  async getInstrumentsByTrackName(trackName: string): Promise<any> {
+    const tracks = await this.abletonWrapper.getTracks();
+    trackName = trackName.toLowerCase();
+    // const track = tracks.find(t => t.name.toLowerCase() === trackName.toLowerCase());
+    // return track?.instruments ?? [];
+    var i = 0;
+    for (const track of tracks) {
+      if (track.raw.name.toLowerCase() === trackName) {
+        return this.abletonWrapper.getInstrument(i) ?? [];
+      }
+      i++;
+    }
+    return [];
+
   }
 
   private async addInstrument(trackIndex: number, instrumentData: Instrument): Promise<void> {
@@ -49,7 +65,7 @@ export class InstrumentManager {
   }
 
   private async configureInstrumentParameters(
-    deviceId: number, 
+    deviceId: number,
     parameters: Record<string, any>
   ): Promise<void> {
     for (const [paramName, value] of Object.entries(parameters)) {

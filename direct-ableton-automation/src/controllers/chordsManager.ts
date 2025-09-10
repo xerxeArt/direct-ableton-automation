@@ -3,7 +3,7 @@ import { generateChord, noteNameToSemitone, velocityForIntensity } from "../tool
 import { timeBarToBeats } from "../tools/timeTools.js";
 import { Track, Section, ClipWithNotes, Note } from "../types.js";
 
-export class SongManager {
+export class ChordsManager {
     private abletonWrapper: AbletonWrapper;
 
     constructor(abletonWrapper: AbletonWrapper) {
@@ -26,7 +26,6 @@ export class SongManager {
             notes: this.createNotesForChords(numerator, denominator, section)
         };
 
-        //TODO: This isn't working, check why
         await this.abletonWrapper.createClip(track.id ?? 0, clip);
     }
 

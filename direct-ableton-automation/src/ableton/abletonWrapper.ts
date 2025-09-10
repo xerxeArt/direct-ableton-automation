@@ -1,6 +1,6 @@
 // src/ableton/abletonWrapper.ts
 import type { Ableton } from 'ableton-js';
-import type { ClipWithNotes, LiveTrackKind } from '../types.js';
+import type { ClipWithNotes, LiveTrackKind, Note } from '../types.js';
 import { timeBarToBeats } from '../tools/timeTools.js';
 
 interface LocatorConfig {
@@ -159,7 +159,8 @@ export class AbletonWrapper {
     // Clip operations
     async createClip(trackId: number, clipWithNotes: ClipWithNotes): Promise<void> {
         const clip = await this.createEmptyMidiClip(trackId, clipWithNotes);
-        clip.setNotes(clipWithNotes.notes);
+        const notes = this.mapNotesForAbletonJs(clipWithNotes.notes);
+        await clip.setNotes(notes);
     }
 
     async createEmptyMidiClip(trackId: number, clipWithNotes: ClipWithNotes): Promise<any> {
@@ -218,6 +219,14 @@ export class AbletonWrapper {
         }
     }
 
+    async getInstrument(trackIndex: number): Promise<any> {
+        const tracksAny: any = await this.ableton.song.get('tracks');
+        const children = Array.isArray(tracksAny) ? tracksAny : await tracksAny.get?.('children') ?? [];
+        const track: any = children[trackIndex];
+        const devices: any = await track.get?.('devices') ?? await track.get?.('devices');
+        return devices;
+    }
+    
     // Instrument operations
     async addInstrument(trackIndex: number, instrumentConfig: InstrumentConfig): Promise<number> {
         const tracksAny: any = await this.ableton.song.get('tracks');
@@ -249,6 +258,12 @@ export class AbletonWrapper {
         console.log(`Setting ${parameterName} to ${value} on device ${deviceId}`);
     }
 
+    async getTracks(): Promise<any> {
+        const tracksAny: any = await this.ableton.song.get('tracks');
+        return tracksAny;   
+    }
+
+
     // Helper: move playhead to a beat time using whatever setter is available
     private async movePlayhead(songAny: any, beatTime: number): Promise<void> {
         if (typeof songAny.set === 'function') {
@@ -267,5 +282,15 @@ export class AbletonWrapper {
             const cuePoints: any = await songAny.get?.('cue_points') ?? await songAny.get?.('cuePoints');
             await (cuePoints?.createCuePoint?.(beatTime) ?? cuePoints?.create_cue_point?.(beatTime));
         }
+    }
+
+    private mapNotesForAbletonJs(notes: Array<Note>): Array<any> {
+        return notes.map(note => ({
+            pitch: note.pitch,
+            time: note.startTimeBeats,
+            duration: note.durationBeats,
+            velocity: note.velocity,
+            mute: false
+        }));
     }
 }

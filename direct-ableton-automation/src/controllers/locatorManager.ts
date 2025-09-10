@@ -39,6 +39,15 @@ export class LocatorManager {
       await this.abletonWrapper.createEmptyMidiClip(dummyTrack.id ?? 0, clip);
       await this.createLocator(section);
     }
+    //Create the final locator at the end of the last section
+    const lastSection = sections[sections.length - 1];
+    if (lastSection) {
+      const endBar = lastSection.start_bar + lastSection.length_bars;
+      await this.abletonWrapper.createLocator({
+        time_bar: endBar - 1, // Ableton locators are 0-based
+        name: 'End'
+      });
+    }
   }
 
   private async createLocator(sectionData: Section): Promise<void> {

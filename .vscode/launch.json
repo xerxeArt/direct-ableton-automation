@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "type": "node",
             "request": "launch",
@@ -28,6 +29,25 @@
             "program": "${workspaceFolder}\\direct-ableton-automation\\dist\\index.js",
             "args": [
                 "${workspaceFolder}\\my_songs\\003-MountainMysteries.json"
+            ],
+            "console": "integratedTerminal",
+            "outFiles": [
+                "${workspaceFolder}\\direct-ableton-automation\\dist\\**\\*.js"
+            ]
+        }
+        ,
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program - with get instrument",
+            "preLaunchTask": "npm: build",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\direct-ableton-automation\\dist\\index.js",
+            "args": [
+                "--get-instrument-by-track-name",
+                "Piano"
             ],
             "console": "integratedTerminal",
             "outFiles": [

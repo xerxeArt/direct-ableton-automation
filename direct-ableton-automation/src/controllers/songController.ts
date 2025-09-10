@@ -1,23 +1,23 @@
 // src/controllers/songController.ts
 import type { SongJSON } from '../schemas/song.js';
 import { TrackManager } from './trackManager.js';
-import { SongManager } from './songManager.js';
+import { ChordsManager } from './chordsManager.js';
 import { LocatorManager } from './locatorManager.js';
 import { InstrumentManager } from './instrumentManager.js';
 import { AbletonWrapper } from '../ableton/abletonWrapper.js';
-import { Section, Track } from '../types.js';
+import { Instrument, Section, Track } from '../types.js';
 
 export class SongController {
   // private abletonWrapper: AbletonWrapper;
   private trackManager: TrackManager;
-  private songManager: SongManager;
+  private songManager: ChordsManager;
   private locatorManager: LocatorManager;
   private instrumentManager: InstrumentManager;
 
   constructor(abletonWrapper: AbletonWrapper) {
     // this.abletonWrapper = abletonWrapper;
     this.trackManager = new TrackManager(abletonWrapper);
-    this.songManager = new SongManager(abletonWrapper);
+    this.songManager = new ChordsManager(abletonWrapper);
     this.locatorManager = new LocatorManager(abletonWrapper, this.trackManager);
     this.instrumentManager = new InstrumentManager(abletonWrapper);
   }
@@ -42,7 +42,7 @@ export class SongController {
         await this.addInstruments(songData.tracks);
       }
 
-      // Add instruments to tracks
+      // Add chords to tracks
       if (songData.tracks &&
         songData.song_structure && songData.song_structure.sections && songData.song_structure.sections.length > 0
       ) {
@@ -64,9 +64,15 @@ export class SongController {
       return;
     }
 
+    const grandPiano: Instrument = { name: 'GrandPiano', preset: 'Default', parameters: {} };
+
+
     for (const track of chordTracks) {
       await this.songManager.createChords(songData.song_structure.signature_numerator, songData.song_structure.signature_denominator, track, sections ?? []);
+      //Set GrandPiano instrument on the chords track
+      await this.instrumentManager.addInstrumentToTrack(track.id ?? 0, [grandPiano]);
     }
+
   }
 
   // song-level metadata like tempo/timeSignature/name are not part of SongJSON schema
