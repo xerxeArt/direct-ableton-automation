@@ -28,12 +28,13 @@ export function noteNameToSemitone(noteName: string, baseOctaveMidi: number): nu
 };
 
 export function generateChord(rootPitch: number, baseVelocity: number, isMinor: boolean,
-    startBeat: number, durationBeats: number
+    durationBeats: number
 ): Array<Note> {
     const chord: Array<Note> = [];
     const third = isMinor ? 3 : 4;
     const fifth = 7;
     const octave = 12;
+    const startBeat: number = 0;
 
     const velBase = jiggleAroundPercentage(baseVelocity, 10);
     const velFifth = jiggleAroundPercentage(baseVelocity, 10, true);
