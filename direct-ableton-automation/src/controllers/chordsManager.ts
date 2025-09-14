@@ -64,7 +64,11 @@ export class ChordsManager {
             const isMinor = /m(?![a-zA-Z])/.test(chordRootPart) || /m(?![a-zA-Z])/.test(chordNameRaw);
             const startBeat = barIndex * beatsPerBar;
             const durationBeats = beatsPerBar; // hold for full bar
-            notes.push(...generateChord(rootPitch, baseVelocity, isMinor, startBeat, durationBeats));
+            const chordNotes = generateChord(rootPitch, baseVelocity, isMinor, durationBeats);
+            chordNotes.forEach((note: Note) =>
+                note.startBeat = startBeat;
+            );
+            notes.push(chordNotes);
         }
 
         return notes;
